@@ -6,9 +6,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "${BACKEND_PORT:-8002}:8000"
-    volumes:
-      - ./backend:/app/
-      - /app/venv/
+    # volumes:  # Commented out for production - these are for local dev only
+    #   - ./backend:/app/
+    #   - /app/venv/
     environment:
       # Flask Configuration
       - FLASK_APP=${FLASK_APP:-director.entrypoint.api.server}
@@ -82,9 +82,9 @@ services:
       context: ./frontend
     ports:
       - "${FRONTEND_PORT:-8001}:${VITE_PORT:-8001}"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+    # volumes:  # Commented out for production - these are for local dev only
+    #   - ./frontend:/app
+    #   - /app/node_modules
     environment:
       # Frontend Configuration
       - VITE_APP_BACKEND_URL=${VITE_APP_BACKEND_URL:-http://127.0.0.1:8002}
