@@ -83,7 +83,7 @@ services:
       args:
         - VITE_APP_BACKEND_URL=${VITE_APP_BACKEND_URL:-http://127.0.0.1:8002}
     ports:
-      - "${FRONTEND_PORT:-8001}:80"
+      - "${FRONTEND_PORT:-8001}:4173"
     # volumes:  # Commented out for production - these are for local dev only
     #   - ./frontend:/app
     #   - /app/node_modules
