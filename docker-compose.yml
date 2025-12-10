@@ -80,14 +80,11 @@ services:
     image: director_frontend:latest
     build:
       context: ./frontend
+      args:
+        - VITE_APP_BACKEND_URL=${VITE_APP_BACKEND_URL:-http://127.0.0.1:8002}
     ports:
-      - "${FRONTEND_PORT:-8001}:${VITE_PORT:-8001}"
+      - "${FRONTEND_PORT:-8001}:80"
     # volumes:  # Commented out for production - these are for local dev only
     #   - ./frontend:/app
     #   - /app/node_modules
-    environment:
-      # Frontend Configuration
-      - VITE_APP_BACKEND_URL=${VITE_APP_BACKEND_URL:-http://127.0.0.1:8002}
-      - VITE_PORT=${VITE_PORT:-8001}
-      - VITE_OPEN_BROWSER=${VITE_OPEN_BROWSER:-true}
-    command: npm run dev
+    # Note: VITE_APP_BACKEND_URL is passed at build time via build args above
