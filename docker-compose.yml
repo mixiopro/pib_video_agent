@@ -5,7 +5,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "${BACKEND_PORT:-8000}:8000"
+      - "${BACKEND_PORT:-8002}:8000"
     volumes:
       - ./backend:/app/
       - /app/venv/
@@ -13,6 +13,7 @@ services:
       # Flask Configuration
       - FLASK_APP=${FLASK_APP:-director.entrypoint.api.server}
       - FLASK_DEBUG=${FLASK_DEBUG:-1}
+      - SERVER_PORT=${SERVER_PORT:-8000}
 
       # VideoDB Integration
       - VIDEO_DB_API_KEY=${VIDEO_DB_API_KEY:?}
@@ -86,7 +87,7 @@ services:
       - /app/node_modules
     environment:
       # Frontend Configuration
-      - VITE_APP_BACKEND_URL=${VITE_APP_BACKEND_URL:-http://127.0.0.1:8000}
+      - VITE_APP_BACKEND_URL=${VITE_APP_BACKEND_URL:-http://127.0.0.1:8002}
       - VITE_PORT=${VITE_PORT:-8001}
       - VITE_OPEN_BROWSER=${VITE_OPEN_BROWSER:-true}
     command: npm run dev
