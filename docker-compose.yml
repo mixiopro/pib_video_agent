@@ -2,18 +2,76 @@ services:
   backend:
     image: director:latest
     build:
-      context: ./backend 
+      context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     volumes:
       - ./backend:/app/
       - /app/venv/
-    env_file:
-      - ./backend/.env
     environment:
-      - FLASK_APP=director.entrypoint.api.server
-      - FLASK_DEBUG=1
+      # Flask Configuration
+      - FLASK_APP=${FLASK_APP:-director.entrypoint.api.server}
+      - FLASK_DEBUG=${FLASK_DEBUG:-1}
+
+      # VideoDB Integration
+      - VIDEO_DB_API_KEY=${VIDEO_DB_API_KEY:?}
+
+      # Database Configuration
+      - DB_TYPE=${DB_TYPE:-sqlite}
+
+      # PostgreSQL Configuration (if DB_TYPE=postgres)
+      - POSTGRES_DB=${POSTGRES_DB:-}
+      - POSTGRES_USER=${POSTGRES_USER:-}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
+      - POSTGRES_HOST=${POSTGRES_HOST:-}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+
+      # SQLite Configuration (if DB_TYPE=sqlite)
+      - SQLITE_DB_PATH=${SQLITE_DB_PATH:-./database.db}
+
+      # LLM Integrations
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GOOGLEAI_API_KEY=${GOOGLEAI_API_KEY:-}
+
+      # Tools
+      - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN:-}
+
+      # Brandkit Agent
+      - INTRO_VIDEO_ID=${INTRO_VIDEO_ID:-}
+      - OUTRO_VIDEO_ID=${OUTRO_VIDEO_ID:-}
+      - BRAND_IMAGE_ID=${BRAND_IMAGE_ID:-}
+
+      # Profanity Remover Agent
+      - BEEP_AUDIO_ID=${BEEP_AUDIO_ID:-}
+
+      # Slack Agent
+      - SLACK_CHANNEL_NAME=${SLACK_CHANNEL_NAME:-}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:-}
+
+      # Dubbing & Audio Generation Agent
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY:-}
+      - BEATOVEN_API_KEY=${BEATOVEN_API_KEY:-}
+
+      # Video Generation Agent
+      - STABILITYAI_API_KEY=${STABILITYAI_API_KEY:-}
+      - KLING_AI_ACCESS_API_KEY=${KLING_AI_ACCESS_API_KEY:-}
+      - KLING_AI_SECRET_API_KEY=${KLING_AI_SECRET_API_KEY:-}
+
+      # FAL AI
+      - FAL_KEY=${FAL_KEY:-}
+
+      # Composio Agent
+      - COMPOSIO_API_KEY=${COMPOSIO_API_KEY:-}
+      - COMPOSIO_APPS=${COMPOSIO_APPS:-["HACKERNEWS"]}
+
+      # Web Search Agent
+      - SERP_API_KEY=${SERP_API_KEY:-}
+
+      # Devzery API Test
+      - DEVZERY_API_KEY=${DEVZERY_API_KEY:-}
+      - DEVZERY_SOURCE_NAME=${DEVZERY_SOURCE_NAME:-}
     # dev command
     command: python director/entrypoint/api/server.py
 
@@ -22,10 +80,13 @@ services:
     build:
       context: ./frontend
     ports:
-      - "8080:8080"
+      - "${FRONTEND_PORT:-8001}:${VITE_PORT:-8001}"
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    env_file:
-      - ./frontend/.env
+    environment:
+      # Frontend Configuration
+      - VITE_APP_BACKEND_URL=${VITE_APP_BACKEND_URL:-http://127.0.0.1:8000}
+      - VITE_PORT=${VITE_PORT:-8001}
+      - VITE_OPEN_BROWSER=${VITE_OPEN_BROWSER:-true}
     command: npm run dev
