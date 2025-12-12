@@ -15,8 +15,8 @@ const ROUTE_CONFIG = {
 
   // Dashboard protected routes
   protected: {
-    exact: ["/profile"],
-    prefixes: [""],
+    exact: ["/", "/profile"],
+    prefixes: [],
   },
 };
 
@@ -104,9 +104,8 @@ router.beforeEach(async (to, from, next) => {
   // Handle root path
   if (pathname === "/") {
     if (isAuthed) {
-      return next("/");
+      return next(); // Just allow access, no redirect
     } else {
-      // Redirect to login with return URL if needed, though for root it's just login
       return next("/auth/login");
     }
   }
