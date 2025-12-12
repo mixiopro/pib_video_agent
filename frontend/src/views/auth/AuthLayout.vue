@@ -3,7 +3,7 @@
     class="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8"
   >
     <div
-      class="w-full max-w-md space-y-8 bg-white p-8 rounded-xl shadow-lg border border-gray-100"
+      class="w-full max-w-md mx-auto space-y-8 bg-white p-8 rounded-xl shadow-lg border border-gray-100"
     >
       <div class="text-center">
         <!-- Optional Logo Placeholder -->

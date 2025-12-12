@@ -18,11 +18,11 @@
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card class="p-6">
+        <CardHeader class="px-0 py-0">
           <CardTitle>Login</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent class="px-0 pb-0">
           <Alert v-if="message" variant="default" class="mb-6">
             <AlertDescription>{{ message }}</AlertDescription>
           </Alert>
