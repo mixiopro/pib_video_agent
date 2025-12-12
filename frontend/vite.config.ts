@@ -1,5 +1,6 @@
-import { defineConfig, loadEnv } from 'vite';
-import vue from '@vitejs/plugin-vue';
+import { defineConfig, loadEnv } from "vite";
+import vue from "@vitejs/plugin-vue";
+import { fileURLToPath, URL } from "node:url";
 
 export default ({ mode }) => {
   // Load environment variables based on the current mode (e.g., 'development', 'production')
@@ -7,10 +8,15 @@ export default ({ mode }) => {
 
   return defineConfig({
     plugins: [vue()],
+    resolve: {
+      alias: {
+        "@": fileURLToPath(new URL("./src", import.meta.url)),
+      },
+    },
     server: {
-      host: '0.0.0.0',
-      port: parseInt(env.VITE_PORT),  // Access the port directly from the env object
-      open: env.VITE_OPEN_BROWSER === 'false' ? false : true,  // Use the environment variable to control browser opening, default to true
+      host: "0.0.0.0",
+      port: parseInt(env.VITE_PORT), // Access the port directly from the env object
+      open: env.VITE_OPEN_BROWSER === "false" ? false : true, // Use the environment variable to control browser opening, default to true
     },
   });
 };
