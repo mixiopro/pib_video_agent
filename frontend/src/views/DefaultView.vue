@@ -1,10 +1,56 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, nextTick } from "vue";
+import { useRouter } from "vue-router";
 import { ChatInterface } from "@videodb/chat-vue";
 import "@videodb/chat-vue/dist/style.css";
+import { authClient } from "@/auth-client";
 
 const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL;
 const chatInterfaceRef = ref(null);
+const router = useRouter();
+
+const handleLogout = async () => {
+  try {
+    await authClient.signOut();
+    router.push("/auth/login");
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
+};
+
+const injectLogoutButton = () => {
+  // Wait for chat interface to fully render
+  nextTick(() => {
+    setTimeout(() => {
+      // Find the sidebar footer element with specific classes
+      const sidebarFooter = document.querySelector(
+        ".vdb-c-mt-auto.vdb-c-flex.vdb-c-flex-col"
+      );
+
+      if (sidebarFooter) {
+        // Clear existing content
+        sidebarFooter.innerHTML = "";
+
+        // Create logout button
+        const logoutBtn = document.createElement("button");
+        logoutBtn.className =
+          "vdb-c-flex vdb-c-items-center vdb-c-gap-3 vdb-c-w-full vdb-c-px-3 vdb-c-py-2 vdb-c-text-sm vdb-c-text-gray-600 hover:vdb-c-bg-gray-100 vdb-c-rounded-md vdb-c-transition-colors flex gap-3 hover:bg-primary/80 !p-2 cursor-pointer";
+        logoutBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Logout</span>
+        `;
+        logoutBtn.onclick = handleLogout;
+
+        // Append to footer
+        sidebarFooter.appendChild(logoutBtn);
+      }
+    }, 500); // Give the chat interface time to render
+  });
+};
 
 const handleKeyDown = (event) => {
   if ((event.ctrlKey || event.metaKey) && event.key === "k") {
@@ -13,9 +59,12 @@ const handleKeyDown = (event) => {
     chatInterfaceRef.value.chatInputRef.focus();
   }
 };
+
 onMounted(() => {
   window.addEventListener("keydown", handleKeyDown);
+  injectLogoutButton();
 });
+
 onUnmounted(() => {
   window.removeEventListener("keydown", handleKeyDown);
 });
