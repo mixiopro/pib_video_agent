@@ -1,3 +1,4 @@
+import logging
 import os
 
 from director.constants import LLMType
@@ -6,6 +7,8 @@ from director.llm.openai import OpenAI
 from director.llm.anthropic import AnthropicAI
 from director.llm.googleai import GoogleAI
 from director.llm.videodb_proxy import VideoDBProxy
+
+logger = logging.getLogger(__name__)
 
 
 def get_default_llm():
@@ -18,10 +21,14 @@ def get_default_llm():
     default_llm = os.getenv("DEFAULT_LLM")
 
     if openai or default_llm == LLMType.OPENAI:
+        logger.info("Using OpenAI LLM")
         return OpenAI()
     elif anthropic or default_llm == LLMType.ANTHROPIC:
+        logger.info("Using Anthropic LLM")
         return AnthropicAI()
     elif googleai or default_llm == LLMType.GOOGLEAI:
+        logger.info("Using Google AI LLM")
         return GoogleAI()
     else:
+        logger.info("Using VideoDB Proxy LLM")
         return VideoDBProxy()
