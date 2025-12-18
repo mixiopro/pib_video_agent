@@ -67,23 +67,31 @@ class GoogleAI(BaseLLM):
 
         for message in messages:
             if message["role"] == "assistant" and message.get("tool_calls"):
+                api_tool_calls = []
+                for tool_call in message["tool_calls"]:
+                    tc = {
+                        "id": tool_call["id"],
+                        "function": {
+                            "name": tool_call["tool"]["name"],
+                            "arguments": json.dumps(
+                                tool_call["tool"]["arguments"]
+                            ),
+                        },
+                        "type": tool_call["type"],
+                    }
+                    if "thought_signature" in tool_call:
+                        tc["extra_content"] = {
+                            "google": {
+                                "thought_signature": tool_call["thought_signature"]
+                            }
+                        }
+                    api_tool_calls.append(tc)
+
                 formatted_messages.append(
                     {
                         "role": message["role"],
                         "content": message["content"],
-                        "tool_calls": [
-                            {
-                                "id": tool_call["id"],
-                                "function": {
-                                    "name": tool_call["tool"]["name"],
-                                    "arguments": json.dumps(
-                                        tool_call["tool"]["arguments"]
-                                    ),
-                                },
-                                "type": tool_call["type"],
-                            }
-                            for tool_call in message["tool_calls"]
-                        ],
+                        "tool_calls": api_tool_calls,
                     }
                 )
             else:
@@ -162,10 +170,10 @@ class GoogleAI(BaseLLM):
             print(f"Error: {e}")
             return LLMResponse(content=f"Error: {e}")
 
-        return LLMResponse(
-            content=response.choices[0].message.content or "",
-            tool_calls=[
-                {
+        tool_calls = []
+        if response.choices[0].message.tool_calls:
+            for tool_call in response.choices[0].message.tool_calls:
+                tc_data = {
                     "id": tool_call.id,
                     "tool": {
                         "name": tool_call.function.name,
@@ -173,10 +181,32 @@ class GoogleAI(BaseLLM):
                     },
                     "type": tool_call.type,
                 }
-                for tool_call in response.choices[0].message.tool_calls
-            ]
-            if response.choices[0].message.tool_calls
-            else [],
+                thought_signature = None
+                if hasattr(tool_call, "model_dump"):
+                    full_dict = tool_call.model_dump(warnings=False)
+                    thought_signature = (
+                        full_dict.get("extra_content", {})
+                        .get("google", {})
+                        .get("thought_signature")
+                    )
+                elif hasattr(tool_call, "dict"):
+                    full_dict = tool_call.dict()
+                    thought_signature = (
+                        full_dict.get("extra_content", {})
+                        .get("google", {})
+                        .get("thought_signature")
+                    )
+                
+                if not thought_signature and hasattr(tool_call, "extra_content"):
+                     thought_signature = tool_call.extra_content.get("google", {}).get("thought_signature")
+
+                if thought_signature:
+                    tc_data["thought_signature"] = thought_signature
+                tool_calls.append(tc_data)
+
+        return LLMResponse(
+            content=response.choices[0].message.content or "",
+            tool_calls=tool_calls,
             finish_reason=response.choices[0].finish_reason,
             send_tokens=response.usage.prompt_tokens,
             recv_tokens=response.usage.completion_tokens,
