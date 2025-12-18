@@ -48,6 +48,9 @@ def create_app(app_config: object):
     # Set the logging config
     dictConfig(app.config["LOGGING_CONFIG"])
 
+    from director.llm import get_default_llm
+    get_default_llm()
+
     with app.app_context():
         from director.entrypoint.api import errors
 
