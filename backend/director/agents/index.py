@@ -1,4 +1,11 @@
 import logging
+import os
+import concurrent.futures
+import time
+import requests
+from io import BytesIO
+from PIL import Image
+import google.generativeai as genai
 
 from director.agents.base import BaseAgent, AgentResponse, AgentStatus
 
@@ -245,19 +252,69 @@ class IndexAgent(BaseAgent):
                 self.videodb_tool.index_spoken_words(video_id)
 
             elif index_type == "scene":
+                self.output_message.actions.append("Extracting scenes from video..")
+                self.output_message.push_update()
+                
                 scene_index_type = scene_index_config["type"]
-                scene_index_config = scene_index_config[
+                extraction_config = scene_index_config[
                     scene_index_type + "_based_config"
                 ]
-                scene_index_id = self.videodb_tool.index_scene(
+                
+                # 1. Extract Scenes
+                scene_collection = self.videodb_tool.extract_scenes(
                     video_id=video_id,
                     extraction_type=scene_index_type,
-                    extraction_config=scene_index_config,
-                    prompt=scene_index_prompt,
+                    extraction_config=extraction_config
                 )
-                self.videodb_tool.get_scene_index(
-                    video_id=video_id, scene_id=scene_index_id
+                scenes = scene_collection.scenes
+                
+                if not scenes:
+                    return AgentResponse(status=AgentStatus.ERROR, message="No scenes extracted from video.")
+
+                self.output_message.actions.append(f"Annotating {len(scenes)} scenes with Gemini..")
+                self.output_message.push_update()
+
+                # 2. Parallel Annotation with Gemini
+                api_key = os.getenv("GOOGLEAI_API_KEY")
+                if not api_key:
+                    raise Exception("GOOGLEAI_API_KEY not found in environment.")
+                
+                genai.configure(api_key=api_key)
+                # Using gemini-2.5-flash as requested by user
+                model = genai.GenerativeModel("gemini-2.5-flash")
+                video = self.videodb_tool.collection.get_video(video_id)
+
+                def annotate_single_scene(i, scene, retries=3):
+                    for attempt in range(retries):
+                        try:
+                            thumbnail = video.generate_thumbnail(time=scene.start)
+                            frame_url = thumbnail.url if hasattr(thumbnail, "url") else thumbnail
+                            
+                            response = requests.get(frame_url)
+                            img = Image.open(BytesIO(response.content))
+                            
+                            gen_response = model.generate_content([scene_index_prompt, img])
+                            scene.description = gen_response.text.strip()
+                            return True
+                        except Exception as e:
+                            logger.warning(f"Retry {attempt+1}/{retries} for scene {i} failed: {e}")
+                            if attempt < retries - 1:
+                                time.sleep(2 ** attempt)
+                    return False
+
+                with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                    futures = [executor.submit(annotate_single_scene, i, scene) for i, scene in enumerate(scenes)]
+                    concurrent.futures.wait(futures)
+
+                # 3. Index with Custom Annotations
+                self.output_message.actions.append("Finalizing index with custom annotations..")
+                self.output_message.push_update()
+                
+                scene_index_id = video.index_scenes(
+                    scenes=scenes, 
+                    name=f"Gemini Index - {scene_index_type}"
                 )
+                
                 scene_data = {"scene_index_id": scene_index_id}
 
         except Exception as e:

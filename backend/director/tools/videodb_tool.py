@@ -278,6 +278,18 @@ class VideoDBTool:
             prompt=prompt,
         )
 
+    def extract_scenes(
+        self,
+        video_id: str,
+        extraction_type=SceneExtractionType.shot_based,
+        extraction_config={},
+    ):
+        video = self.collection.get_video(video_id)
+        return video.extract_scenes(
+            extraction_type=extraction_type,
+            extraction_config=extraction_config,
+        )
+
     def list_scene_index(self, video_id: str):
         video = self.collection.get_video(video_id)
         return video.list_scene_index()
