@@ -280,9 +280,16 @@ class EditingAgent(BaseAgent):
                 overlay_at = overlay_asset.get("overlay_at", 0)
                 timeline.add_overlay(overlay_at, image_asset)
             if overlay_asset.get("asset_type") == "text_asset":
-                asset_config = overlay_asset.get("asset_config", {}).copy()
+                asset_config = overlay_asset.get("asset_config", {})
+                if not isinstance(asset_config, dict):
+                    asset_config = {}
+                asset_config = asset_config.copy()
+
                 if asset_config.get("style"):
-                    style_dict = asset_config.get("style", {}).copy() 
+                    style_dict = asset_config.get("style", {})
+                    if not isinstance(style_dict, dict):
+                        style_dict = {}
+                    style_dict = style_dict.copy()
                     style = TextStyle(**style_dict)
                     asset_config["style"] = style
 
@@ -413,7 +420,11 @@ class EditingAgent(BaseAgent):
 
             print("-" * 40, "Ended Run", "-" * 40)
 
-            stream_url = self.editing_response.data.get("edited_stream_url")
+            if self.editing_response:
+                stream_url = self.editing_response.data.get("edited_stream_url")
+            else:
+                stream_url = None
+
             if stream_url:
                 video_content.video = VideoData(stream_url=stream_url)
                 video_content.status = MsgStatus.success

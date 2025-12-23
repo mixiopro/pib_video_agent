@@ -31,7 +31,7 @@ class GoogleAIConfig(BaseLLMConfig):
     llm_type: str = LLMType.GOOGLEAI
     api_key: str = ""
     api_base: str = "https://generativelanguage.googleapis.com/v1beta/openai/"
-    chat_model: str = Field(default=GoogleChatModel.GEMINI_3_FLASH)
+    chat_model: str = Field(default=GoogleChatModel.GEMINI_3_PRO)
     max_tokens: int = 4096
 
     @field_validator("api_key")
