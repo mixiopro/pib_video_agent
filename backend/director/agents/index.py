@@ -5,7 +5,7 @@ import time
 import requests
 from io import BytesIO
 from PIL import Image
-import google.generativeai as genai
+from google import genai
 
 from director.agents.base import BaseAgent, AgentResponse, AgentStatus
 
@@ -279,9 +279,8 @@ class IndexAgent(BaseAgent):
                 if not api_key:
                     raise Exception("GOOGLEAI_API_KEY not found in environment.")
                 
-                genai.configure(api_key=api_key)
+                client = genai.Client(api_key=api_key)
                 # Using gemini-2.5-flash as requested by user
-                model = genai.GenerativeModel("gemini-2.5-flash")
                 video = self.videodb_tool.collection.get_video(video_id)
 
                 def annotate_single_scene(i, scene, retries=3):
@@ -293,7 +292,10 @@ class IndexAgent(BaseAgent):
                             response = requests.get(frame_url)
                             img = Image.open(BytesIO(response.content))
                             
-                            gen_response = model.generate_content([scene_index_prompt, img])
+                            gen_response = client.models.generate_content(
+                                model="gemini-2.5-flash",
+                                contents=[scene_index_prompt, img]
+                            )
                             scene.description = gen_response.text.strip()
                             return True
                         except Exception as e:
